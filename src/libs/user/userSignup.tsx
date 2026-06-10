@@ -1,5 +1,5 @@
 import { getBackendUrl } from "@/components/utility/setup";
-import { RegisterInput } from "../../../../interface";
+import { RegisterInput } from "../../../interface";
 
 export default async function userSignup(signUp: RegisterInput) {
   try {

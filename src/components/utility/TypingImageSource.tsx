@@ -6,17 +6,30 @@ import { TextField, Select, MenuItem } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
 
 /* -----------------------------
-   Provider definitions
+    Provider definitions
 ------------------------------ */
 
 const providerMap = {
   bypass: (input: string) => input,
 
+  unsplash: (input: string) => {
+    try {
+      const url = new URL(input);
+      return url.hostname === "images.unsplash.com" ? url.href : null;
+    } catch {
+      return null;
+    }
+  },
+
   "google drive": (input: string) => {
     try {
-      const id = new URL(input).pathname.split("/")[5];
+      // Regex matches the 33-character ID standard for Google Drive files
+      const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      const id = match ? match[1] : null;
+      
+      // Removed &authuser=1 to make it public-friendly
       return id
-        ? `https://drive.usercontent.google.com/download?id=${id}&authuser=1`
+        ? `https://drive.usercontent.google.com/download?id=${id}`
         : null;
     } catch {
       return null;
@@ -83,7 +96,7 @@ const providers = Object.keys(providerMap) as Array<keyof typeof providerMap>;
 type Provider = (typeof providers)[number];
 
 /* -----------------------------
-   Safety utilities
+    Safety utilities
 ------------------------------ */
 
 function toSafeImageUrl(value: string | null): string | null {
@@ -99,7 +112,7 @@ function toSafeImageUrl(value: string | null): string | null {
 }
 
 /* -----------------------------
-   Client‑only image preview
+    Client‑only image preview
 ------------------------------ */
 
 const ImagePreview = dynamic(() => import("./ImagePreview"), {
@@ -107,7 +120,7 @@ const ImagePreview = dynamic(() => import("./ImagePreview"), {
 });
 
 /* -----------------------------
-   Component
+    Component
 ------------------------------ */
 
 export default function TypingImageSource({

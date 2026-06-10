@@ -1,20 +1,20 @@
 // import {
-//   InterSize,
-//   InterActionPlan,
-//   MapObjectId,
-//   MyMap,
-//   HealthIssueBody,
+//   // InterSize,
+//   // InterActionPlan,
+//   // MapObjectId,
+//   // MyMap,
+//   // HealthIssueBody,
 //   Id,
-//   UpdateTimeOffsetRaw,
+//   // UpdateTimeOffsetRaw,
 //   SocketEvent,
-//   TriggerDataPack,
+//   // TriggerDataPack,
 // } from "../../../interface";
 import dayjs from "dayjs";
 import React from "react";
 // import getUserProfile from "@/libs/user/getUserProfile";
 // import getTimeOffset from "@/libs/user/getTimeOffset";
 // import { Session } from "next-auth";
-// import { Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 type Id=string
 
 export function startSize(): Map<
@@ -429,59 +429,59 @@ export class AddRemoveHigh {
   }
 }
 
-// export class SocketReady<T> {
-//   private socket: Socket;
-//   private eventName: SocketEvent;
-//   private room: string;
-//   constructor(socket: Socket, event: SocketEvent, room: string | Id) {
-//     this.socket = socket;
-//     this.eventName = event;
-//     this.room = room.toString();
-//   }
-//   public listen(event: (arg0: T) => void) {
-//     this.socket.on(this.eventName, (data: T, r: string) => {
-//       if (r == this.room) {
-//         event(data);
-//       }
-//     });
-//   }
-//   public trigger(data: T) {
-//     this.socket.emit(`${this.eventName}Send`, data, this.room);
-//   }
-//   public static trigger<T>(
-//     data: T,
-//     eventName: SocketEvent,
-//     room: string,
-//     socket: Socket,
-//   ) {
-//     socket.emit(`${eventName}Send`, data, room);
-//   }
-//   public static triggerPack<T>(
-//     { data, room, event }: TriggerDataPack<T>,
-//     socket: Socket,
-//   ) {
-//     socket.emit(`${event}Send`, data, room);
-//   }
-//   public triggerPack<T>({ data, room, event }: TriggerDataPack<T>) {
-//     this.socket.emit(`${event}Send`, data, room);
-//   }
-//   public triggerToOther(data: T, room: Id | string) {
-//     this.socket.emit(`${this.eventName}Send`, data, room.toString());
-//   }
-//   public disconnect() {
-//     this.socket.off(this.eventName);
-//   }
-//   public static listenMany<T>(
-//     event: (arg0: T, room: string) => void,
-//     eventName: SocketEvent,
-//     socket: Socket,
-//   ) {
-//     socket.on(eventName, (data: T, r: string) => {
-//       event(data, r);
-//     });
-//     return () => socket.off(eventName);
-//   }
-// }
+export class SocketReady<T> {
+  private socket: Socket;
+  private eventName: SocketEvent;
+  private room: string;
+  constructor(socket: Socket, event: SocketEvent, room: string | Id) {
+    this.socket = socket;
+    this.eventName = event;
+    this.room = room.toString();
+  }
+  public listen(event: (arg0: T) => void) {
+    this.socket.on(this.eventName, (data: T, r: string) => {
+      if (r == this.room) {
+        event(data);
+      }
+    });
+  }
+  public trigger(data: T) {
+    this.socket.emit(`${this.eventName}Send`, data, this.room);
+  }
+  public static trigger<T>(
+    data: T,
+    eventName: SocketEvent,
+    room: string,
+    socket: Socket,
+  ) {
+    socket.emit(`${eventName}Send`, data, room);
+  }
+  // public static triggerPack<T>(
+  //   { data, room, event }: TriggerDataPack<T>,
+  //   socket: Socket,
+  // ) {
+  //   socket.emit(`${event}Send`, data, room);
+  // }
+  // public triggerPack<T>({ data, room, event }: TriggerDataPack<T>) {
+  //   this.socket.emit(`${event}Send`, data, room);
+  // }
+  public triggerToOther(data: T, room: Id | string) {
+    this.socket.emit(`${this.eventName}Send`, data, room.toString());
+  }
+  public disconnect() {
+    this.socket.off(this.eventName);
+  }
+  public static listenMany<T>(
+    event: (arg0: T, room: string) => void,
+    eventName: SocketEvent,
+    socket: Socket,
+  ) {
+    socket.on(eventName, (data: T, r: string) => {
+      event(data, r);
+    });
+    return () => socket.off(eventName);
+  }
+}
 export function notify(message: string) {
   if (typeof window === "undefined") return;
   if (!("Notification" in window)) return;
@@ -537,3 +537,99 @@ export function cn(...inputs: ClassValue[]): string {
 export function generateOTP(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
+export function formatThaiDateTime(iso?: string): string | null {
+  if (!iso) return null;
+  return new Intl.DateTimeFormat("th-TH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+import {
+  Activity,
+  CheckCircle2,
+  Clock,
+  MessageCircle,
+  Phone,
+  Video,
+  XCircle,
+} from "lucide-react";
+import { PatientHandoffStatus, SocketEvent } from "../../../interface";
+
+export const PHARMACIST_PHOTOS: Record<string, string> = {
+  "rph-001": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&q=80",
+  "rph-002": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&q=80",
+  "rph-003": "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&q=80",
+  "rph-004": "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=200&q=80",
+  "rph-005": "https://images.unsplash.com/photo-1607990283143-e81e7a2c9349?w=200&q=80",
+  "rph-006": "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=200&q=80",
+  "rph-007": "https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=200&q=80",
+  "rph-008": "https://images.unsplash.com/photo-1643297654416-05795d62e39c?w=200&q=80",
+  "rph-009": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&q=80",
+  "rph-010": "https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=200&q=80",
+};
+
+export const STATUS_LABEL: Record<PatientHandoffStatus, string> = {
+  sent: "รอดำเนินการ",
+  accepted: "รับเรื่องแล้ว",
+  ready: "ยาพร้อมรับ",
+  completed: "เสร็จสิ้น",
+  rejected: "ยกเลิก",
+};
+
+export const STATUS_VARIANT: Record<
+  PatientHandoffStatus,
+  "default" | "success" | "warning" | "destructive" | "muted"
+> = {
+  sent: "default",
+  accepted: "warning",
+  ready: "success",
+  completed: "muted",
+  rejected: "destructive",
+};
+
+export function StatusIcon({ status, className }: { status: PatientHandoffStatus; className?: string }) {
+  const icons: Record<PatientHandoffStatus, React.FC<{ className?: string }>> = {
+    sent: ({ className: c }) => <Clock className={c} />,
+    accepted: ({ className: c }) => <Activity className={c} />,
+    ready: ({ className: c }) => <CheckCircle2 className={c} />,
+    completed: ({ className: c }) => <CheckCircle2 className={c} />,
+    rejected: ({ className: c }) => <XCircle className={c} />,
+  };
+  const Icon = icons[status];
+  return <Icon className={className} />;
+}
+
+export function ChannelIcon({ channel, className }: { channel?: string; className?: string }) {
+  if (channel === "video") return <Video className={className} />;
+  if (channel === "phone") return <Phone className={className} />;
+  return <MessageCircle className={className} />;
+}
+
+export const CHANNEL_LABEL: Record<string, string> = {
+  chat: "แชท",
+  phone: "โทรศัพท์",
+  video: "วิดีโอคอล",
+};
+
+export const REQUEST_TYPE_LABEL: Record<string, string> = {
+  in_store: "ที่ร้าน",
+  pickup: "รับยาที่ร้าน",
+  telemedicine: "เภสัชทางไกล",
+  delivery: "จัดส่งยา",
+};
+
+export const WAIT_STEPS: { status: PatientHandoffStatus; label: string }[] = [
+  { status: "sent", label: "ส่งคำขอ" },
+  { status: "accepted", label: "รับเรื่อง" },
+  { status: "ready", label: "ยาพร้อม" },
+  { status: "completed", label: "เสร็จสิ้น" },
+];
+
+export function stepIndex(status: PatientHandoffStatus): number {
+  const idx = WAIT_STEPS.findIndex((s) => s.status === status);
+  return idx === -1 ? 0 : idx;
+}
+

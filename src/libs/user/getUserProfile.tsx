@@ -1,5 +1,5 @@
 import { getBackendUrl, userPath } from "@/components/utility/setup";
-import { AuthUser } from "../../../../interface";
+import { AuthUser } from "../../../interface";
 export default async function getUserProfile(
   token: string
 ): Promise<AuthUser> {

@@ -5,7 +5,7 @@ import { TextField } from "@mui/material";
 import { setTextToString } from "./setup";
 import { LockLinkType } from "./AllInOneLock";
 import { Button } from "../ui/button";
-import checkPassword from "../libs/user/checkPassword";
+import checkPassword from "../../libs/user/checkPassword";
 export default function PasswordLock({
   children,
   token,
