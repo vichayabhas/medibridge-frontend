@@ -51,8 +51,6 @@ export default function Navbar({user}:{user:AuthUser|null}) {
   const isPharmacyAdmin = currentUser?.role === "pharmacy_admin";
   const isHome = location === "/";
   const solid = scrolled || !isHome || open;
-  console.log(currentUser?.name)
-  
   const navLinks = isPharmacist
     ? pharmacistLinks
     : isAdmin

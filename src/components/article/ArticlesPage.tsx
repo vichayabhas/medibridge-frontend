@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { BookOpen, Search, Sparkles, Plus, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { ArticleReady, AuthUser } from "../../../interface";
 import React from "react";
 import Link from "next/link";
 import { cn } from "../utility/setup";
-// import { useArticleStore } from "@/stores";
+import Image from "next/image";
 
 type Category = "all" | "healthTip" | "review" | "product";
 
@@ -32,16 +32,24 @@ const catLabel: Record<string, string> = {
   other: "อื่นๆ",
 };
 
-export default function ArticlesPage({user,articles}:{user:AuthUser|null,articles:ArticleReady[]}) {
-  const currentUser = user
-  const isPharmacistOrAdmin = currentUser?.role === "pharmacist" || currentUser?.role === "admin";
+export default function ArticlesPage({
+  user,
+  articles,
+}: {
+  user: AuthUser | null;
+  articles: ArticleReady[];
+}) {
+  const currentUser = user;
+  const isPharmacistOrAdmin =
+    currentUser?.role === "pharmacist" || currentUser?.role === "admin";
   const [activeCategory, setActiveCategory] = React.useState<Category>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
-  const loading=false
-
+  const loading = false;
 
   const filtered = articles.filter((a) => {
-    const matchCat = activeCategory === "all" || a.category?.toLowerCase() === activeCategory.toLowerCase();
+    const matchCat =
+      activeCategory === "all" ||
+      a.category?.toLowerCase() === activeCategory.toLowerCase();
     const matchSearch =
       !searchQuery ||
       a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -64,7 +72,8 @@ export default function ArticlesPage({user,articles}:{user:AuthUser|null,article
             ความรู้จากเภสัชกร
           </h1>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto mb-8">
-            บทความคุณภาพจากเภสัชกรวิชาชีพ ทั้งรีวิวสินค้า เคล็ดลับสุขภาพ และข้อมูลยา
+            บทความคุณภาพจากเภสัชกรวิชาชีพ ทั้งรีวิวสินค้า เคล็ดลับสุขภาพ
+            และข้อมูลยา
           </p>
 
           <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-4">
@@ -100,7 +109,7 @@ export default function ArticlesPage({user,articles}:{user:AuthUser|null,article
                 "flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200",
                 activeCategory === c.key
                   ? "bg-primary text-white border-primary shadow-sm shadow-primary/30"
-                  : "bg-background text-muted-foreground border-border/60 hover:border-primary/40 hover:text-primary"
+                  : "bg-background text-muted-foreground border-border/60 hover:border-primary/40 hover:text-primary",
               )}
             >
               {c.label}
@@ -111,42 +120,51 @@ export default function ArticlesPage({user,articles}:{user:AuthUser|null,article
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <Loader2 className="h-10 w-10 text-primary animate-spin" />
-            <p className="text-muted-foreground animate-pulse">กำลังโหลดบทความ...</p>
+            <p className="text-muted-foreground animate-pulse">
+              กำลังโหลดบทความ...
+            </p>
           </div>
         ) : (
           <>
             {/* Stats */}
             <p className="text-sm text-muted-foreground mb-6">
-              แสดง <span className="font-semibold text-foreground">{filtered.length}</span> บทความ
+              แสดง{" "}
+              <span className="font-semibold text-foreground">
+                {filtered.length}
+              </span>{" "}
+              บทความ
             </p>
 
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((a, i) => (
-                <Link key={a._id} href={`/articles/${a._id}`}>
+                <Link key={a._id} href={`/articles/from-id/${a._id}`}>
                   <Card
                     className="reveal-up group overflow-hidden hover:-translate-y-2 hover:shadow-[var(--shadow-hover)] transition-all duration-500 border-border/40 h-full"
                     style={{ animationDelay: `${(i % 6) * 80}ms` }}
                   >
                     <div className="relative h-48 overflow-hidden">
-                      <img
+                      <Image
                         src={a.coverImage}
                         alt={a.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                       <div className="absolute top-3 left-3 flex gap-2 shadow-sm">
-                        <Badge 
+                        <Badge
                           // variant={(catVariant[a.category?.toLowerCase()] ) ?? "muted"}
                           className="rounded-full px-3 py-1 text-xs font-bold tracking-wide border-none bg-primary/95 text-primary-foreground backdrop-blur-sm"
                         >
-                          {catLabel[a.category?.toLowerCase()] || a.category || "อื่นๆ"}
+                          {catLabel[a.category?.toLowerCase()] ||
+                            a.category ||
+                            "อื่นๆ"}
                         </Badge>
                         {a.isAIGenerated && (
-                          <Badge 
-                            variant="secondary" 
+                          <Badge
+                            variant="secondary"
                             className="gap-1 rounded-full px-3 py-1 text-xs font-bold tracking-wide border-none bg-secondary/95 text-secondary-foreground backdrop-blur-sm"
                           >
-                            <Sparkles className="h-3 w-3" />AI
+                            <Sparkles className="h-3 w-3" />
+                            AI
                           </Badge>
                         )}
                       </div>
@@ -155,18 +173,21 @@ export default function ArticlesPage({user,articles}:{user:AuthUser|null,article
                       <h3 className="font-bold text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors duration-300 flex-1">
                         {a.title}
                       </h3>
-                      <p 
+                      <p
                         className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed"
-                        dangerouslySetInnerHTML={{ 
+                        dangerouslySetInnerHTML={{
                           __html: (a.excerpt || "").replace(
                             /#([\u0E00-\u0E7Fa-zA-Z0-9_]+)/g,
-                            '<span class="text-primary font-bold">#$1</span>'
-                          ) 
+                            '<span class="text-primary font-bold">#$1</span>',
+                          ),
                         }}
                       />
                       <div className="flex flex-wrap gap-1 mb-4">
                         {a.tags.slice(0, 3).map((t) => (
-                          <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          <span
+                            key={t}
+                            className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                          >
                             #{t}
                           </span>
                         ))}
@@ -190,7 +211,9 @@ export default function ArticlesPage({user,articles}:{user:AuthUser|null,article
                   <BookOpen className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="font-bold text-lg mb-2">ไม่พบบทความที่ตรงกัน</h3>
-                <p className="text-muted-foreground leading-[1.75] max-w-xs mx-auto">ลองค้นหาด้วยคำอื่น หรือเปลี่ยนหมวดหมู่</p>
+                <p className="text-muted-foreground leading-[1.75] max-w-xs mx-auto">
+                  ลองค้นหาด้วยคำอื่น หรือเปลี่ยนหมวดหมู่
+                </p>
               </div>
             )}
           </>

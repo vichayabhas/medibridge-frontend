@@ -27,7 +27,7 @@ interface ProfileSectionProps {
     email: string;
     phone: string;
     role: string;
-    createAt?: string;
+    createAt?: Date;
     avatar_url?: string;
   };
   // syncStatus: "synced" | "syncing" | "error";
@@ -39,7 +39,7 @@ interface ProfileSectionProps {
     email: string;
     phone?: string;
     role: string;
-    createAt?: string;
+    createAt?: Date;
   } | null;
   logout: () => Promise<void>;
   // onSyncClick: () => void;

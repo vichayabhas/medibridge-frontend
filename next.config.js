@@ -4,6 +4,10 @@ const nextConfig = {
         remotePatterns: [
             {
                 protocol: 'https',
+                hostname: '*.fna.fbcdn.net', // Allows all Facebook CDN subdomains
+            },
+            {
+                protocol: 'https',
                 hostname: 'images.unsplash.com',
             },
             {

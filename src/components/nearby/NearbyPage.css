@@ -1,0 +1,56 @@
+.nearby-page { padding: 0 16px; }
+.nearby-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 16px;
+}
+.nearby-subtitle {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-secondary); font-size: 0.8125rem; margin-top: 4px;
+}
+.filter-chips {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px;
+  -ms-overflow-style: none; scrollbar-width: none;
+}
+.filter-chips::-webkit-scrollbar { display: none; }
+.chip {
+  padding: 8px 16px; border-radius: var(--radius-full); white-space: nowrap;
+  font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  color: var(--text-secondary); transition: all var(--transition-fast);
+}
+.chip:hover { border-color: var(--primary); color: var(--text-primary); }
+.chip-active {
+  background: rgba(13, 148, 136, 0.15); border-color: var(--primary);
+  color: var(--primary-light);
+}
+.pharmacy-list { display: flex; flex-direction: column; gap: 12px; }
+.pharmacy-card { text-align: left; width: 100%; }
+.pharm-card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.pharm-avatar {
+  width: 48px; height: 48px; border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(13,148,136,0.2), rgba(59,130,246,0.1));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; flex-shrink: 0;
+}
+.pharm-info { flex: 1; min-width: 0; }
+.pharm-info h4 { font-size: 0.9375rem; margin-bottom: 2px; }
+.pharm-address {
+  font-size: 0.75rem; color: var(--text-tertiary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pharm-arrow { color: var(--text-tertiary); flex-shrink: 0; margin-top: 4px; }
+.pharm-meta {
+  display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px;
+}
+.pharm-meta-item {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 0.8125rem; color: var(--text-secondary);
+}
+.text-success { color: var(--success) !important; }
+.text-danger { color: var(--danger) !important; }
+.text-accent { color: var(--accent) !important; }
+.pharm-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 48px 0; color: var(--text-secondary);
+}

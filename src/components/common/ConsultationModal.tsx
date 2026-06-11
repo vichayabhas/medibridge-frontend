@@ -1,11 +1,11 @@
+"use client";
 import React, { useEffect, useRef, useState } from "react";
-import { TelemedicineChannel } from "../../../../interface";
-import { cn } from "../../utility/setup";
-import ChatConsult from "./ChatConsult";
-import WaitingScreen from "./WaitingScreen";
-import PhoneConsult from "./PhoneConsult";
-import VideoConsult from "./VideoConsult";
-
+import { TelemedicineChannel } from "../../../interface";
+import { cn } from "../utility/setup";
+import ChatConsult from "../user/consultationModal/ChatConsult";
+import WaitingScreen from "../user/consultationModal/WaitingScreen";
+import PhoneConsult from "../user/consultationModal/PhoneConsult";
+import VideoConsult from "../user/consultationModal/VideoConsult";
 
 interface ConsultationModalProps {
   handoffId: string;
@@ -16,8 +16,6 @@ interface ConsultationModalProps {
   onClose: () => void;
 }
 
-
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const CHANNEL_LABEL: Record<TelemedicineChannel, string> = {
@@ -26,26 +24,13 @@ const CHANNEL_LABEL: Record<TelemedicineChannel, string> = {
   video: "วิดีโอคอล",
 };
 
-
-
-
-
-
-
-
-
 // ─── Chat UI ─────────────────────────────────────────────────────────────────
-
 
 // ─── Real Daily.co call inner (reusable for phone+video) ─────────────────────
 
-
-
 // ─── Phone UI ─────────────────────────────────────────────────────────────────
 
-
 // ─── Video UI ─────────────────────────────────────────────────────────────────
-
 
 // ─── Modal shell ─────────────────────────────────────────────────────────────
 
@@ -84,7 +69,7 @@ export function ConsultationModal({
   };
 
   return (
-    <div 
+    <div
       ref={modalRef}
       onClick={handleBackdropClick}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
@@ -92,7 +77,9 @@ export function ConsultationModal({
       <div
         className={cn(
           "w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col",
-          isChat && !waiting ? "h-[85svh] sm:h-[600px] bg-background" : "h-[85svh] sm:h-[560px] bg-slate-950",
+          isChat && !waiting
+            ? "h-[85svh] sm:h-[600px] bg-background"
+            : "h-[85svh] sm:h-[560px] bg-slate-950",
         )}
       >
         {/* Waiting gate */}
@@ -112,7 +99,9 @@ export function ConsultationModal({
             <span
               className={cn(
                 "text-xs px-2 py-1 rounded-full font-semibold",
-                isPhone ? "bg-emerald-500/20 text-emerald-300" : "bg-violet-500/20 text-violet-300"
+                isPhone
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : "bg-violet-500/20 text-violet-300",
               )}
             >
               {CHANNEL_LABEL[channel]}
@@ -121,13 +110,25 @@ export function ConsultationModal({
         )}
 
         {!waiting && isChat && (
-          <ChatConsult handoffId={handoffId} patientName={patientName} onClose={onClose} />
+          <ChatConsult
+            handoffId={handoffId}
+            patientName={patientName}
+            onClose={onClose}
+          />
         )}
         {!waiting && isPhone && (
-          <PhoneConsult handoffId={handoffId} pharmacyName={pharmacyName} onClose={onClose} />
+          <PhoneConsult
+            handoffId={handoffId}
+            pharmacyName={pharmacyName}
+            onClose={onClose}
+          />
         )}
         {!waiting && isVideo && (
-          <VideoConsult handoffId={handoffId} pharmacyName={pharmacyName} onClose={onClose} />
+          <VideoConsult
+            handoffId={handoffId}
+            pharmacyName={pharmacyName}
+            onClose={onClose}
+          />
         )}
       </div>
     </div>

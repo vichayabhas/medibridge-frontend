@@ -39,8 +39,6 @@ export default async function RootLayout({
   if (session) {
     user = await getUserProfile(session.user.token);
   }
-  console.log(session?.user.token)
-  console.log(user)
 
   return (
     // Your lang="th" goes here

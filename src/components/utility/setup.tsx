@@ -537,7 +537,7 @@ export function cn(...inputs: ClassValue[]): string {
 export function generateOTP(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
-export function formatThaiDateTime(iso?: string): string | null {
+export function formatThaiDateTime(iso?: Date): string | null {
   if (!iso) return null;
   return new Intl.DateTimeFormat("th-TH", {
     year: "numeric",

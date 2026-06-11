@@ -12,6 +12,16 @@ import type { SelectChangeEvent } from "@mui/material";
 const providerMap = {
   bypass: (input: string) => input,
 
+  facebook: (input: string) => {
+    try {
+      const url = new URL(input);
+      // Validates if the domain belongs to Facebook's content delivery networks
+      return url.hostname.includes("fbcdn.net") ? url.href : null;
+    } catch {
+      return null;
+    }
+  },
+
   unsplash: (input: string) => {
     try {
       const url = new URL(input);

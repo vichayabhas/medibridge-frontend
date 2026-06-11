@@ -61,8 +61,8 @@ export default function ProfilePage({
   const load = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
-    const data = await getPatientHandoffs();
-    setHandoffs(data.rows);
+    const data = await getPatientHandoffs(token);
+    setHandoffs(data);
     if (isRefresh) setRefreshing(false);
     else setLoading(false);
   };

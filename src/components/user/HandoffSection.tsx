@@ -40,7 +40,7 @@ import {
   WAIT_STEPS,
 } from "../utility/setup";
 import { PatientHandoffType, PharmacistType } from "../../../interface";
-import { ConsultationModal } from "./consultationModal/ConsultationModal";
+import { ConsultationModal } from "../common/ConsultationModal";
 
 export function computeTokens(
   handoff: PatientHandoffType,
@@ -80,11 +80,11 @@ export function ActiveHandoffCard({
   const [showConsult, setShowConsult] = useState(false);
 
   const requestedAt = formatThaiDateTime(
-    handoff.telemedicineRequestTime.toString() ?? handoff.createAt.toString(),
+    handoff.telemedicineRequestTime ?? handoff.createAt,
   );
-  const appointmentAt = formatThaiDateTime(handoff.appointmentTime.toString());
+  const appointmentAt = formatThaiDateTime(handoff.appointmentTime);
   const startedAt = formatThaiDateTime(
-    handoff.telemedicineStartTime.toString(),
+    handoff.telemedicineStartTime,
   );
   const tokens = computeTokens(handoff, pharmacist);
 
@@ -378,9 +378,9 @@ export function ConsultCard({
   const [expanded, setExpanded] = useState(false);
   const [showConsult, setShowConsult] = useState(false);
   const reqAt = formatThaiDateTime(
-    h.telemedicineRequestTime.toString() ?? h.createAt.toString(),
+    h.telemedicineRequestTime ?? h.createAt,
   );
-  const apptAt = formatThaiDateTime(h.appointmentTime.toString());
+  const apptAt = formatThaiDateTime(h.appointmentTime);
 
   return (
     <Card className="border-secondary/30 bg-secondary/5 overflow-hidden">
