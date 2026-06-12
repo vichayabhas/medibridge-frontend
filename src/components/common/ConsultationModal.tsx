@@ -2,10 +2,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TelemedicineChannel } from "../../../interface";
 import { cn } from "../utility/setup";
-import ChatConsult from "../user/consultationModal/ChatConsult";
-import WaitingScreen from "../user/consultationModal/WaitingScreen";
-import PhoneConsult from "../user/consultationModal/PhoneConsult";
-import VideoConsult from "../user/consultationModal/VideoConsult";
+import ChatConsult from "./consultationModal/ChatConsult";
+import WaitingScreen from "./consultationModal/WaitingScreen";
+import PhoneConsult from "./consultationModal/PhoneConsult";
+import VideoConsult from "./consultationModal/VideoConsult";
 
 interface ConsultationModalProps {
   handoffId: string;

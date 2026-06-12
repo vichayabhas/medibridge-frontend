@@ -19,7 +19,7 @@ import {
   useLocalSessionId,
   useParticipantIds,
 } from "@daily-co/daily-react";
-import { cn } from "@/components/utility/setup";
+import { cn, supabase } from "@/components/utility/setup";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import ParticipantView from "./ParticipantView";
@@ -523,14 +523,14 @@ export default function DailyCallInner({
                   toast.error(`ไฟล์ใหญ่เกิน 10 MB`);
                   return;
                 }
-                // const ext = file.name.split(".").pop() ?? "bin";
-                // const path = `${handoffId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-                // const { error: uploadError } = await supabase.storage.from("chat-attachments").upload(path, file, { cacheControl: "3600", upsert: false });
-                // if (uploadError) { toast.error(`ส่งไฟล์ไม่สำเร็จ`); return; }
-                // const { data: urlData } = supabase.storage.from("chat-attachments").getPublicUrl(path);
-                // const isImage = file.type.startsWith("image/");
-                // const envelope = JSON.stringify({ type: isImage ? "image" : "file", data: urlData.publicUrl, name: file.name });
-                // await sendMessage(envelope);
+                const ext = file.name.split(".").pop() ?? "bin";
+                const path = `${handoffId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+                const { error: uploadError } = await supabase.storage.from("chat-attachments").upload(path, file, { cacheControl: "3600", upsert: false });
+                if (uploadError) { toast.error(`ส่งไฟล์ไม่สำเร็จ`); return; }
+                const { data: urlData } = supabase.storage.from("chat-attachments").getPublicUrl(path);
+                const isImage = file.type.startsWith("image/");
+                const envelope = JSON.stringify({ type: isImage ? "image" : "file", data: urlData.publicUrl, name: file.name });
+                await sendMessage(envelope);
                 e.target.value = "";
               }}
             />

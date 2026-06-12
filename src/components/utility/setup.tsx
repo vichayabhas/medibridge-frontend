@@ -15,7 +15,7 @@ import React from "react";
 // import getTimeOffset from "@/libs/user/getTimeOffset";
 // import { Session } from "next-auth";
 import { Socket } from "socket.io-client";
-type Id=string
+type Id = string;
 
 export function startSize(): Map<
   "S" | "M" | "L" | "XL" | "XXL" | "3XL",
@@ -45,7 +45,6 @@ export function calculate(
 }
 export const resOk = { success: true };
 export const resError = { success: false };
-
 
 export function isInTime(start: Date, end: Date): boolean {
   const now = new Date(Date.now());
@@ -144,7 +143,6 @@ export function peeLookupNong<P, N>(
   }
   return outs;
 }
-
 
 export function getDifferentMinute(start: Date, end: Date) {
   return dayjs(end).diff(start, "minute");
@@ -559,16 +557,26 @@ import {
 import { PatientHandoffStatus, SocketEvent } from "../../../interface";
 
 export const PHARMACIST_PHOTOS: Record<string, string> = {
-  "rph-001": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&q=80",
-  "rph-002": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&q=80",
-  "rph-003": "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&q=80",
-  "rph-004": "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=200&q=80",
-  "rph-005": "https://images.unsplash.com/photo-1607990283143-e81e7a2c9349?w=200&q=80",
-  "rph-006": "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=200&q=80",
-  "rph-007": "https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=200&q=80",
-  "rph-008": "https://images.unsplash.com/photo-1643297654416-05795d62e39c?w=200&q=80",
-  "rph-009": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&q=80",
-  "rph-010": "https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=200&q=80",
+  "rph-001":
+    "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&q=80",
+  "rph-002":
+    "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&q=80",
+  "rph-003":
+    "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&q=80",
+  "rph-004":
+    "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=200&q=80",
+  "rph-005":
+    "https://images.unsplash.com/photo-1607990283143-e81e7a2c9349?w=200&q=80",
+  "rph-006":
+    "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=200&q=80",
+  "rph-007":
+    "https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=200&q=80",
+  "rph-008":
+    "https://images.unsplash.com/photo-1643297654416-05795d62e39c?w=200&q=80",
+  "rph-009":
+    "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&q=80",
+  "rph-010":
+    "https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=200&q=80",
 };
 
 export const STATUS_LABEL: Record<PatientHandoffStatus, string> = {
@@ -590,8 +598,17 @@ export const STATUS_VARIANT: Record<
   rejected: "destructive",
 };
 
-export function StatusIcon({ status, className }: { status: PatientHandoffStatus; className?: string }) {
-  const icons: Record<PatientHandoffStatus, React.FC<{ className?: string }>> = {
+export function StatusIcon({
+  status,
+  className,
+}: {
+  status: PatientHandoffStatus;
+  className?: string;
+}) {
+  const icons: Record<
+    PatientHandoffStatus,
+    React.FC<{ className?: string }>
+  > = {
     sent: ({ className: c }) => <Clock className={c} />,
     accepted: ({ className: c }) => <Activity className={c} />,
     ready: ({ className: c }) => <CheckCircle2 className={c} />,
@@ -602,7 +619,13 @@ export function StatusIcon({ status, className }: { status: PatientHandoffStatus
   return <Icon className={className} />;
 }
 
-export function ChannelIcon({ channel, className }: { channel?: string; className?: string }) {
+export function ChannelIcon({
+  channel,
+  className,
+}: {
+  channel?: string;
+  className?: string;
+}) {
   if (channel === "video") return <Video className={className} />;
   if (channel === "phone") return <Phone className={className} />;
   return <MessageCircle className={className} />;
@@ -633,3 +656,37 @@ export function stepIndex(status: PatientHandoffStatus): number {
   return idx === -1 ? 0 : idx;
 }
 
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
+export function removeItem<T>(
+  indexToRemove: number,
+  set: (setter: (input: T[]) => T[]) => void,
+) {
+  set((prevItems) => {
+    // 1. Create a shallow copy of the array
+    const newItems = [...prevItems];
+    // 2. Mutate the copy
+    newItems.splice(indexToRemove, 1);
+    // 3. Return the new array
+    return newItems;
+  });
+}
