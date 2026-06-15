@@ -1,5 +1,16 @@
+"use client";
+import React from "react";
+import { ChatMessage, TelemedicineChannel } from "../../../interface";
 import {
-  AlertCircle,
+  useDaily,
+  useDailyEvent,
+  useLocalSessionId,
+  useParticipantIds,
+} from "@daily-co/daily-react";
+import { ConnectionState } from "./useDailyCall";
+import { useTelepharmacyChat } from "../common/consultationModal/useTelepharmacyChat";
+import {
+  ChevronLeft,
   ImagePlus,
   Loader2,
   MessageSquare,
@@ -9,71 +20,52 @@ import {
   Send,
   Video,
   VideoOff,
-  X,
 } from "lucide-react";
-import React from "react";
-import { Button } from "../../ui/button";
-import {
-  useDaily,
-  useDailyEvent,
-  useLocalSessionId,
-  useParticipantIds,
-} from "@daily-co/daily-react";
-import { cn, supabase } from "@/components/utility/setup";
-import { Input } from "@/components/ui/input";
+import ReconnectOverlay from "./ReconnectOverlay";
+import ErrorOverlay from "./ErrorOverlay";
+import NetworkIndicator from "./NetworkIndicator";
+import DurationDisplay from "./DurationDisplay";
+import { cn, supabase } from "../utility/setup";
+import ParticipantView from "../common/ParticipantView";
+import { Input } from "../ui/input";
 import { toast } from "sonner";
-import ParticipantView from "../ParticipantView";
-import { useTelepharmacyChat } from "./useTelepharmacyChat";
-import { fetchTelemedicineMeetingToken } from "@/libs/oldApi/daily";
-import { ChatMessage } from "../../../../interface";
-interface DailyCallInnerProps {
+import { Button } from "../ui/button";
+interface CallInnerProps {
   roomUrl: string;
-  audioOnly: boolean;
+  roomToken: string | null;
+  channel: TelemedicineChannel;
   pharmacyName: string;
-  onClose: () => void;
   handoffId: string;
+  onLeave: () => void;
   messageInputs: ChatMessage[];
 }
-function useDuration(active: boolean) {
-  const [secs, setSecs] = React.useState(0);
-  React.useEffect(() => {
-    if (!active) {
-      setSecs(0);
-      return;
-    }
-    const t = setInterval(() => setSecs((s) => s + 1), 1000);
-    return () => clearInterval(t);
-  }, [active]);
-  const m = String(Math.floor(secs / 60)).padStart(2, "0");
-  const s = String(secs % 60).padStart(2, "0");
-  return `${m}:${s}`;
-}
 
-export default function DailyCallInner({
+export default function CallInner({
   roomUrl,
-  audioOnly,
+  roomToken,
+  channel,
   pharmacyName,
-  onClose,
   handoffId,
+  onLeave,
   messageInputs,
-}: DailyCallInnerProps) {
+}: CallInnerProps) {
   const daily = useDaily();
   const localSessionId = useLocalSessionId();
   const remoteIds = useParticipantIds({ filter: "remote" });
+
   const [isJoined, setIsJoined] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(false);
   const [isCameraOff, setIsCameraOff] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [connectionState, setConnectionState] =
+    React.useState<ConnectionState>("connecting");
+  const [reconnectAttempts, setReconnectAttempts] = React.useState(0);
+  const [showReconnecting, setShowReconnecting] = React.useState(false);
   const [showChat, setShowChat] = React.useState(false);
   const [chatDraft, setChatDraft] = React.useState("");
-  const [isReconnecting, setIsReconnecting] = React.useState(false);
-  const [retryCount, setRetryCount] = React.useState(0);
-  const retryTimeoutRef = React.useRef<number | null>(null);
-  const isDestroyedRef = React.useRef(false);
-  const duration = useDuration(isJoined);
 
-  const MAX_RETRIES = 5;
-  const RETRY_DELAY = 3000;
+  const audioOnly = channel === "phone";
+  const pharmacistConnected = remoteIds.length > 0;
 
   // Chat hook
   const { messages, sendMessage } = useTelepharmacyChat({
@@ -83,264 +75,186 @@ export default function DailyCallInner({
     messageInputs,
   });
 
-  // Join room with retry logic
-  const joinRoom = async () => {
-    if (!daily || !handoffId || isDestroyedRef.current) return;
+  // Join room
+  React.useEffect(() => {
+    if (!daily || isJoined || !roomToken) return;
 
-    // Check if already joined
-    try {
-      const meetingState = daily.meetingState();
-      if (meetingState === "joined-meeting") {
-        setIsJoined(true);
-        return;
+    let cancelled = false;
+
+    const joinRoom = async () => {
+      try {
+        await daily.join({
+          url: roomUrl,
+          token: roomToken,
+          startVideoOff: audioOnly,
+        });
+        try {
+          daily.setLocalAudio(true);
+        } catch (e) {
+          console.warn("Could not enable local audio after join", e);
+        }
+
+        if (!cancelled) {
+          setIsJoined(true);
+          setConnectionState("connected");
+          setReconnectAttempts(0);
+          setShowReconnecting(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const errorMsg =
+            err instanceof Error ? err.message : "Failed to join";
+          setError(errorMsg);
+          setConnectionState("error");
+          handleReconnect();
+        }
       }
-    } catch (e) {
-      console.warn("Daily instance check failed:", e);
+    };
+
+    joinRoom();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [daily, roomUrl, audioOnly, isJoined, roomToken]);
+
+  // Reconnect logic
+  const handleReconnect = () => {
+    if (reconnectAttempts >= 5) {
+      setError("ไม่สามารถเชื่อมต่อได้ กรุณาตรวจสอบอินเทอร์เน็ต");
+      setConnectionState("error");
       return;
     }
 
-    try {
-      const { token } = await fetchTelemedicineMeetingToken({
-        handoffId,
-        participantName: pharmacyName,
-        role: "pharmacist",
-        audioOnly,
-      });
+    setShowReconnecting(true);
+    setConnectionState("reconnecting");
+    setReconnectAttempts((prev) => prev + 1);
 
-      await daily.join({ url: roomUrl, token, startVideoOff: audioOnly });
-      try {
-        daily.setLocalAudio(true);
-      } catch (e) {
-        console.warn("Could not enable local audio after join", e);
+    // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 16000);
+
+    setTimeout(() => {
+      if (daily) {
+        daily
+          .join({
+            url: roomUrl,
+            token: roomToken ?? undefined,
+            startVideoOff: audioOnly,
+          })
+          .catch(() => {
+            handleReconnect();
+          });
       }
-      if (!isDestroyedRef.current) {
-        setIsJoined(true);
-        setError(null);
-        setRetryCount(0);
-        setIsReconnecting(false);
-      }
-    } catch (e) {
-      if (!isDestroyedRef.current) {
-        const msg = e instanceof Error ? e.message : "Connection error";
-        // Filter out destroyed instance errors
-        if (!msg.toLowerCase().includes("destroyed")) {
-          setError(msg);
-        }
-        // Auto retry on join error
-        if (
-          retryCount < MAX_RETRIES &&
-          !isReconnecting &&
-          !msg.toLowerCase().includes("destroyed")
-        ) {
-          setIsReconnecting(true);
-          retryTimeoutRef.current = window.setTimeout(() => {
-            if (!isDestroyedRef.current) {
-              setRetryCount((prev) => prev + 1);
-              joinRoom();
-            }
-          }, RETRY_DELAY);
-        }
-      }
-    }
+    }, delay);
   };
 
-  React.useEffect(() => {
-    if (!daily || !handoffId) return;
-    joinRoom();
-  }, [daily, handoffId, roomUrl]);
+  // Daily events
+  useDailyEvent("joined-meeting", () => {
+    setIsJoined(true);
+    setConnectionState("connected");
+    setReconnectAttempts(0);
+    setShowReconnecting(false);
+  });
 
-  // Monitor connection and auto-retry
-  React.useEffect(() => {
-    if (!daily || !isJoined || isDestroyedRef.current) return;
-
-    const checkConnection = () => {
-      if (!daily || isDestroyedRef.current) return;
-
-      let isConnected = false;
-      try {
-        isConnected = daily.meetingState() === "joined-meeting";
-      } catch {
-        console.warn("Cannot check meeting state - instance destroyed");
-        return;
-      }
-
-      if (!isConnected && !isReconnecting) {
-        setIsReconnecting(true);
-        setError("การเชื่อมต่อขาดหาย กำลังพยายามเชื่อมต่อใหม่...");
-
-        if (retryCount < MAX_RETRIES) {
-          retryTimeoutRef.current = window.setTimeout(() => {
-            if (!isDestroyedRef.current) {
-              setRetryCount((prev) => prev + 1);
-              joinRoom();
-            }
-          }, RETRY_DELAY);
-        } else {
-          setError("ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่ภายหลัง");
-        }
-      } else if (isConnected && isReconnecting) {
-        setIsReconnecting(false);
-        setError(null);
-        setRetryCount(0);
-      }
-    };
-
-    const interval = setInterval(checkConnection, 5000);
-    return () => {
-      clearInterval(interval);
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
-    };
-  }, [daily, isJoined, isReconnecting, retryCount]);
-
-  useDailyEvent("joined-meeting", () => setIsJoined(true));
   useDailyEvent("left-meeting", () => {
     setIsJoined(false);
-    onClose();
+    onLeave();
   });
+
   useDailyEvent("error", (ev) => {
-    const msg = ev?.errorMsg || "Connection error";
-    // Filter out destroyed instance errors
-    if (
-      msg.toLowerCase().includes("destroyed") ||
-      msg.toLowerCase().includes("use of a destroyed")
-    ) {
-      console.warn("Daily instance destroyed, ignoring error:", msg);
-      return;
-    }
-    if (!isDestroyedRef.current) {
-      setError(msg);
-    }
+    setError(ev?.errorMsg || "Connection error");
+    setConnectionState("error");
   });
 
-  // Sync mic and camera state with Daily
-  React.useEffect(() => {
-    if (!daily || isDestroyedRef.current) return;
-    const checkStates = () => {
-      if (isDestroyedRef.current) return;
-      try {
-        const audioState = daily.localAudio();
-        const videoState = daily.localVideo();
-        setIsMuted(!audioState);
-        setIsCameraOff(!videoState);
-      } catch {
-        // Instance destroyed, ignore
-      }
-    };
-    checkStates();
-    const interval = setInterval(checkStates, 500);
-    return () => clearInterval(interval);
-  }, [daily]);
+  useDailyEvent("participant-joined", () => {
+    // Pharmacist joined
+  });
 
-  // Cleanup: end call when component unmounts
-  React.useEffect(() => {
-    return () => {
-      if (!isDestroyedRef.current && daily) {
-        isDestroyedRef.current = true;
-        daily.leave().catch(() => {});
-        console.log("DailyCallInner unmounted, call ended");
-      }
-    };
-  }, [daily]);
+  useDailyEvent("participant-left", () => {
+    // Pharmacist left - could trigger reconnection logic here
+  });
 
-  const toggleMic = async () => {
-    if (!daily || !localSessionId || isDestroyedRef.current) return;
+  // Controls
+  const toggleMute = () => {
+    if (!daily || !localSessionId) return;
     try {
-      // isMuted: true = mic is off, false = mic is on
-      // setLocalAudio(true) = enable, setLocalAudio(false) = disable
-      const newAudioEnabled = isMuted;
-      await daily.setLocalAudio(newAudioEnabled);
-      setIsMuted(!newAudioEnabled);
+      daily.setLocalAudio(!isMuted);
+      setIsMuted((m) => !m);
     } catch (err) {
-      console.error("Error toggling microphone:", err);
+      console.error("Error toggling mic:", err);
     }
   };
 
-  const toggleCamera = async () => {
-    if (!daily || !localSessionId || audioOnly || isDestroyedRef.current)
-      return;
+  const toggleCamera = () => {
+    if (!daily || !localSessionId || audioOnly) return;
     try {
-      // isCameraOff: true = camera is off, false = camera is on
-      // setLocalVideo(true) = enable, setLocalVideo(false) = disable
-      const newVideoEnabled = isCameraOff;
-      await daily.setLocalVideo(newVideoEnabled);
-      setIsCameraOff(!newVideoEnabled);
+      daily.setLocalVideo(!isCameraOff);
+      setIsCameraOff((c) => !c);
     } catch (err) {
       console.error("Error toggling camera:", err);
     }
   };
 
-  const leave = async () => {
-    isDestroyedRef.current = true;
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
+  const leaveCall = async () => {
+    if (daily) {
+      await daily.leave().catch(() => {});
     }
-    if (daily) await daily.leave().catch(() => {});
-    onClose();
+    onLeave();
   };
 
-  const pharmacistConnected = remoteIds.length > 0;
-
-  if (!isJoined || !localSessionId || isReconnecting) {
+  // Loading state
+  if (!isJoined || !localSessionId) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-slate-950 text-white gap-4 px-6">
-        {error ? (
-          <>
-            <AlertCircle className="h-12 w-12 text-red-400" />
-            <p className="text-center text-sm text-red-300">{error}</p>
-            {isReconnecting ? (
-              <button
-                onClick={onClose}
-                className="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm hover:bg-slate-300"
-              >
-                ยกเลิก
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => {
-                    setRetryCount(0);
-                    setError(null);
-                    joinRoom();
-                  }}
-                  className="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-primary/90"
-                >
-                  ลองใหม่
-                </button>
-                <button
-                  onClick={onClose}
-                  className="text-xs text-slate-400 underline"
-                >
-                  ปิด
-                </button>
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-sm text-slate-400">
-              {isReconnecting
-                ? `กำลังเชื่อมต่อใหม่ (ครั้งที่ ${retryCount}/${MAX_RETRIES})`
-                : "กำลังเชื่อมต่อ..."}
-            </p>
-          </>
+      <div className="flex flex-col items-center justify-center h-full bg-slate-950 text-white gap-4 p-6">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <div className="text-center">
+          <p className="text-lg font-medium">กำลังเชื่อมต่อ...</p>
+          <p className="text-sm text-slate-400 mt-1">{pharmacyName}</p>
+        </div>
+        {connectionState === "reconnecting" && (
+          <p className="text-sm text-amber-400">
+            กำลังเชื่อมต่อใหม่ (ครั้งที่ {reconnectAttempts})
+          </p>
         )}
       </div>
     );
   }
 
   return (
-    <div className="relative flex flex-col h-full bg-slate-950 text-white">
+    <div className="relative w-full h-full bg-slate-950 flex flex-col">
+      {/* Overlays */}
+      {showReconnecting && connectionState === "reconnecting" && (
+        <ReconnectOverlay
+          attempts={reconnectAttempts}
+          maxAttempts={5}
+          onRetry={() => {
+            setReconnectAttempts(0);
+            handleReconnect();
+          }}
+          onCancel={leaveCall}
+        />
+      )}
+
+      {error && connectionState === "error" && (
+        <ErrorOverlay
+          error={error}
+          onRetry={() => {
+            setError(null);
+            setReconnectAttempts(0);
+            handleReconnect();
+          }}
+          onCancel={leaveCall}
+        />
+      )}
+
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 pt-safe">
         <div className="flex items-center gap-3">
           <button
-            onClick={leave}
+            onClick={leaveCall}
             className="h-10 w-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white hover:bg-black/60"
           >
-            <X className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <div>
             <p className="text-sm font-medium text-white">{pharmacyName}</p>
@@ -351,7 +265,8 @@ export default function DailyCallInner({
         </div>
 
         <div className="flex items-center gap-2">
-          <p className="text-lg font-mono font-bold">{duration}</p>
+          <NetworkIndicator />
+          <DurationDisplay isActive={isJoined} />
           {/* Chat toggle */}
           <button
             onClick={() => setShowChat((s) => !s)}
@@ -367,7 +282,7 @@ export default function DailyCallInner({
         </div>
       </div>
 
-      {/* Main Video/Audio Area */}
+      {/* Main Video Area */}
       <div className="flex-1 relative bg-slate-900 flex items-center justify-center">
         {audioOnly ? (
           /* Audio Only View */
@@ -516,13 +431,13 @@ export default function DailyCallInner({
               className="h-10 flex-1 rounded-lg bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
             />
             <input
-              id="modal-chat-image"
+              id="patient-chat-image"
               type="file"
               accept="image/*,application/pdf,.doc,.docx,.txt"
               className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
-                if (!file || !handoffId) return;
+                if (!file) return;
                 if (file.size > 10 * 1024 * 1024) {
                   toast.error(`ไฟล์ใหญ่เกิน 10 MB`);
                   return;
@@ -550,7 +465,7 @@ export default function DailyCallInner({
               }}
             />
             <label
-              htmlFor="modal-chat-image"
+              htmlFor="patient-chat-image"
               className="inline-flex cursor-pointer items-center justify-center h-10 w-10 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"
             >
               <ImagePlus className="h-5 w-5" />
@@ -576,7 +491,7 @@ export default function DailyCallInner({
         <div className="flex items-center justify-center gap-4">
           {/* Mic */}
           <button
-            onClick={toggleMic}
+            onClick={toggleMute}
             className={cn(
               "h-14 w-14 rounded-full flex items-center justify-center transition-colors",
               isMuted
@@ -612,7 +527,7 @@ export default function DailyCallInner({
 
           {/* Leave */}
           <button
-            onClick={leave}
+            onClick={leaveCall}
             className="h-16 w-16 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg shadow-red-500/30 transition-colors"
           >
             <PhoneOff className="h-7 w-7 text-white" />

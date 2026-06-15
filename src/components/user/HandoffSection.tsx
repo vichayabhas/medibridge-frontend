@@ -44,7 +44,7 @@ import {
   PatientHandoffType,
   PharmacistType,
 } from "../../../interface";
-import { ConsultationModal } from "../common/ConsultationModal";
+import { ConsultationModal } from "../common/consultationModal/ConsultationModal";
 
 export function computeTokens(
   handoff: PatientHandoffType,

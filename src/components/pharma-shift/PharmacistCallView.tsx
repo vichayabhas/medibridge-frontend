@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import { fetchTelemedicineMeetingToken } from "@/libs/oldApi/daily";
 import { useAISuggestions } from "./support/useAISuggestions";
 import { cn } from "../utility/setup";
-import ParticipantView from "../common/consultationModal/ParticipantView";
+import ParticipantView from "../common/ParticipantView";
 import  AISuggestionPanel  from "./AISuggestionPanel";
 import CallControls from "./CallControls";
 // import { cn } from "@/lib/utils";

@@ -42,7 +42,7 @@ import {
 import { cn, setTextToString } from "../utility/setup";
 import PatientInfoBoard from "./PatientInfoBoard";
 import InlineAISuggestions from "./InlineAISuggestions";
-import DevicePermissionCheck from "./DevicePermissionCheck";
+import DevicePermissionCheck from "../common/DevicePermissionCheck";
 import PharmacistCallView from "./PharmacistCallView";
 import PharmacistVoiceView from "./PharmacistVoiceView";
 // import { DevicePermissionCheck } from "./DevicePermissionCheck";

@@ -1,11 +1,11 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { ConsultationData, TelemedicineChannel } from "../../../interface";
-import { cn } from "../utility/setup";
-import ChatConsult from "./consultationModal/ChatConsult";
-import WaitingScreen from "./consultationModal/WaitingScreen";
-import PhoneConsult from "./consultationModal/PhoneConsult";
-import VideoConsult from "./consultationModal/VideoConsult";
+import { ConsultationData, TelemedicineChannel } from "../../../../interface";
+import { cn } from "../../utility/setup";
+import ChatConsult from "./ChatConsult";
+import WaitingScreen from "./WaitingScreen";
+import PhoneConsult from "./PhoneConsult";
+import VideoConsult from "./VideoConsult";
 
 interface ConsultationModalProps {
   onClose: () => void;

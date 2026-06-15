@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { ConsultationModal } from "../common/ConsultationModal";
+import { ConsultationModal } from "../common/consultationModal/ConsultationModal";
 export default function ActiveCard({
   h,
   hTokens,

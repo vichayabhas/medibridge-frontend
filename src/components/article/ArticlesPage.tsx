@@ -55,7 +55,7 @@ export default function ArticlesPage({
       a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchCat && matchSearch;
+    return matchCat && matchSearch && a.status == "approved";
   });
 
   return (
