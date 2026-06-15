@@ -1,4 +1,3 @@
-'use client'
 import React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -38,11 +37,10 @@ import { PatientHandoffType, PharmacistType } from "../../../interface";
 import Link from "next/link";
 import { PharmacistQueueView } from "./PharmacistQueueView";
 import ParentView from "./ParentView";
-import loadAllPharmacyAndPharmacist from "@/libs/main/loadAllPharmacyAndPharmacist";
-import getPatientHandoffs from "@/libs/patientHandoff/getPatientHandoffs";
 import { Session } from "next-auth";
 import getUserProfile from "@/libs/user/getUserProfile";
 import getPharmacistData from "@/libs/user/getPharmacistData";
+import getPatientHandoffsForConsultation from "@/libs/patientHandoff/getPatientHandoffsForConsultation";
 
 // ─── Main page (role-based) ───────────────────────────────────────────────────
 
@@ -97,14 +95,7 @@ export default async function TrackingPage({
     const data = await getPharmacistData(session.user.token);
     return <PharmacistQueueView data={data} />;
   } else {
-    const handoffs = await getPatientHandoffs(session.user.token);
-    const { pharmacies, pharmacists } = await loadAllPharmacyAndPharmacist();
-    return (
-      <ParentView
-        pharmacies={pharmacies}
-        pharmacists={pharmacists}
-        handoffs={handoffs}
-      />
-    );
+    const data = await getPatientHandoffsForConsultation(session.user.token);
+    return <ParentView data={data} />;
   }
 }

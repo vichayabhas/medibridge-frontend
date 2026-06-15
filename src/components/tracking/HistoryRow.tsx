@@ -1,31 +1,37 @@
-'use client'
+"use client";
 import React from "react";
 import { Card, CardContent } from "../ui/card";
-import { CHANNEL_LABEL, ChannelIcon, cn, REQUEST_TYPE_LABEL, STATUS_LABEL, STATUS_VARIANT } from "../utility/setup";
+import {
+  CHANNEL_LABEL,
+  ChannelIcon,
+  cn,
+  REQUEST_TYPE_LABEL,
+  STATUS_LABEL,
+  STATUS_VARIANT,
+} from "../utility/setup";
 import { ChevronRight, Coins, Store } from "lucide-react";
 import { Badge } from "../ui/badge";
-import { PatientHandoffType } from "../../../interface";
+import { ConsultationData } from "../../../interface";
 import { computeTokens } from "./TrackingPage";
 export default function HistoryRow({
-  h,
+  data,
   hTokens,
-  pharmacyNameStr,
 }: {
-  h: PatientHandoffType;
+  data: ConsultationData;
   hTokens: ReturnType<typeof computeTokens>;
-  pharmacyNameStr: string;
 }) {
   const [expanded, setExpanded] = React.useState(false);
-  const isTele = h.requestType === "telemedicine";
-  const date = h.createAt
+  const isTele = data.handoff.requestType === "telemedicine";
+  const date = data.handoff.createAt
     ? new Intl.DateTimeFormat("th-TH", {
         year: "numeric",
         month: "short",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      }).format(new Date(h.createAt))
+      }).format(new Date(data.handoff.createAt))
     : "—";
+  const h = data.handoff;
 
   return (
     <Card className="border-border/50 hover:border-primary/30 hover:shadow-md transition-all duration-300">
@@ -43,7 +49,7 @@ export default function HistoryRow({
             >
               {isTele ? (
                 <ChannelIcon
-                  channel={h.telemedicineChannel}
+                  channel={data.handoff.telemedicineChannel}
                   className="h-5 w-5 text-secondary"
                 />
               ) : (
@@ -53,7 +59,7 @@ export default function HistoryRow({
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-0.5">
                 <p className="font-semibold text-sm truncate">
-                  {pharmacyNameStr}
+                  {data.pharmacy.name}
                 </p>
                 <Badge
                   variant={STATUS_VARIANT[h.status]}

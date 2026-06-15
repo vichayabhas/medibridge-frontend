@@ -3,14 +3,29 @@ import { cn } from "@/components/utility/setup";
 import { MessageCircle, Send, X } from "lucide-react";
 import React from "react";
 import { useTelepharmacyChat } from "./useTelepharmacyChat";
+import { ChatMessage } from "../../../../interface";
 function formatTime(date: Date) {
-  return date.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
-export default function ChatConsult({ handoffId, patientName, onClose }: { handoffId: string; patientName: string; onClose: () => void }) {
-  const { messages: rawMessages,  sendMessage } = useTelepharmacyChat({
+export default function ChatConsult({
+  handoffId,
+  patientName,
+  onClose,
+  messageInputs,
+}: {
+  handoffId: string;
+  patientName: string;
+  onClose: () => void;
+  messageInputs: ChatMessage[];
+}) {
+  const { messages: rawMessages, sendMessage } = useTelepharmacyChat({
     handoffId,
     senderType: "patient",
     senderName: patientName,
+    messageInputs,
   });
   const [draft, setDraft] = React.useState("");
   const bottomRef = React.useRef<HTMLDivElement>(null);
@@ -42,29 +57,46 @@ export default function ChatConsult({ handoffId, patientName, onClose }: { hando
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={onClose}
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
-
         {rawMessages.map((m) => {
           const isPatient = m.senderType === "patient";
           const ts = new Date(m.createdAt);
           return (
-            <div key={m._id} className={cn("flex", isPatient ? "justify-end" : "justify-start")}>
+            <div
+              key={m._id}
+              className={cn(
+                "flex",
+                isPatient ? "justify-end" : "justify-start",
+              )}
+            >
               <div
                 className={cn(
                   "max-w-[75%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
                   isPatient
                     ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : "bg-muted text-foreground rounded-bl-sm"
+                    : "bg-muted text-foreground rounded-bl-sm",
                 )}
               >
                 <p>{m.content}</p>
-                <p className={cn("text-[10px] mt-1", isPatient ? "text-primary-foreground/60 text-right" : "text-muted-foreground")}>
+                <p
+                  className={cn(
+                    "text-[10px] mt-1",
+                    isPatient
+                      ? "text-primary-foreground/60 text-right"
+                      : "text-muted-foreground",
+                  )}
+                >
                   {formatTime(ts)}
                 </p>
               </div>
@@ -85,7 +117,12 @@ export default function ChatConsult({ handoffId, patientName, onClose }: { hando
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
           />
-          <Button size="icon" className="h-10 w-10 rounded-xl shrink-0" onClick={send} disabled={!draft.trim()}>
+          <Button
+            size="icon"
+            className="h-10 w-10 rounded-xl shrink-0"
+            onClick={send}
+            disabled={!draft.trim()}
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>

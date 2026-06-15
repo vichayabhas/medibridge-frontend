@@ -25,12 +25,14 @@ import { toast } from "sonner";
 import ParticipantView from "./ParticipantView";
 import { useTelepharmacyChat } from "./useTelepharmacyChat";
 import { fetchTelemedicineMeetingToken } from "@/libs/oldApi/daily";
+import { ChatMessage } from "../../../../interface";
 interface DailyCallInnerProps {
   roomUrl: string;
   audioOnly: boolean;
   pharmacyName: string;
   onClose: () => void;
   handoffId: string;
+  messageInputs: ChatMessage[];
 }
 function useDuration(active: boolean) {
   const [secs, setSecs] = React.useState(0);
@@ -53,6 +55,7 @@ export default function DailyCallInner({
   pharmacyName,
   onClose,
   handoffId,
+  messageInputs,
 }: DailyCallInnerProps) {
   const daily = useDaily();
   const localSessionId = useLocalSessionId();
@@ -77,6 +80,7 @@ export default function DailyCallInner({
     handoffId,
     senderType: "patient",
     senderName: "ผู้ป่วย",
+    messageInputs,
   });
 
   // Join room with retry logic
@@ -525,11 +529,22 @@ export default function DailyCallInner({
                 }
                 const ext = file.name.split(".").pop() ?? "bin";
                 const path = `${handoffId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-                const { error: uploadError } = await supabase.storage.from("chat-attachments").upload(path, file, { cacheControl: "3600", upsert: false });
-                if (uploadError) { toast.error(`ส่งไฟล์ไม่สำเร็จ`); return; }
-                const { data: urlData } = supabase.storage.from("chat-attachments").getPublicUrl(path);
+                const { error: uploadError } = await supabase.storage
+                  .from("chat-attachments")
+                  .upload(path, file, { cacheControl: "3600", upsert: false });
+                if (uploadError) {
+                  toast.error(`ส่งไฟล์ไม่สำเร็จ`);
+                  return;
+                }
+                const { data: urlData } = supabase.storage
+                  .from("chat-attachments")
+                  .getPublicUrl(path);
                 const isImage = file.type.startsWith("image/");
-                const envelope = JSON.stringify({ type: isImage ? "image" : "file", data: urlData.publicUrl, name: file.name });
+                const envelope = JSON.stringify({
+                  type: isImage ? "image" : "file",
+                  data: urlData.publicUrl,
+                  name: file.name,
+                });
                 await sendMessage(envelope);
                 e.target.value = "";
               }}

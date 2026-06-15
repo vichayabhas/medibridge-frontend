@@ -1,0 +1,33 @@
+@tailwind utilities;
+
+.pharma-section-label {
+  @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+}
+
+.pharma-section-label-wide {
+  @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500;
+}
+
+.pharma-section-label-xl {
+  @apply text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500;
+}
+
+.pharma-mini-label {
+  @apply text-[10px] font-bold uppercase tracking-wider text-slate-500;
+}
+
+.comm-badge-chat {
+  @apply border-blue-200 bg-blue-50 text-blue-700;
+}
+
+.comm-badge-phone {
+  @apply border-green-200 bg-green-50 text-green-700;
+}
+
+.comm-badge-video {
+  @apply border-purple-200 bg-purple-50 text-purple-700;
+}
+
+.ai-card-gradient {
+  @apply rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white;
+}

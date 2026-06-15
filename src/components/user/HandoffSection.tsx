@@ -39,7 +39,11 @@ import {
   stepIndex,
   WAIT_STEPS,
 } from "../utility/setup";
-import { PatientHandoffType, PharmacistType } from "../../../interface";
+import {
+  ConsultationData,
+  PatientHandoffType,
+  PharmacistType,
+} from "../../../interface";
 import { ConsultationModal } from "../common/ConsultationModal";
 
 export function computeTokens(
@@ -65,15 +69,9 @@ export function computeTokens(
   return { rate, duration, total: duration * rate, isActual: false };
 }
 
-export function ActiveHandoffCard({
-  handoff,
-  pharmacyName,
-  pharmacist,
-}: {
-  handoff: PatientHandoffType;
-  pharmacyName: string;
-  pharmacist?: PharmacistType | null;
-}) {
+export function ActiveHandoffCard({ data }: { data: ConsultationData }) {
+  const handoff = data.handoff;
+  const pharmacist = data.pharmacist;
   const current = stepIndex(handoff.status);
   const isRejected = handoff.status === "rejected";
   const isTele = handoff.requestType === "telemedicine";
@@ -83,9 +81,7 @@ export function ActiveHandoffCard({
     handoff.telemedicineRequestTime ?? handoff.createAt,
   );
   const appointmentAt = formatThaiDateTime(handoff.appointmentTime);
-  const startedAt = formatThaiDateTime(
-    handoff.telemedicineStartTime,
-  );
+  const startedAt = formatThaiDateTime(handoff.telemedicineStartTime);
   const tokens = computeTokens(handoff, pharmacist);
 
   return (
@@ -113,7 +109,7 @@ export function ActiveHandoffCard({
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Store className="h-3 w-3" />
-              {pharmacyName || "ร้านยา"}
+              {data.pharmacy.name || "ร้านยา"}
             </p>
           </div>
           <Badge
@@ -349,12 +345,8 @@ export function ActiveHandoffCard({
             </Button>
             {showConsult && (
               <ConsultationModal
-                handoffId={handoff._id}
-                channel={handoff.telemedicineChannel ?? "chat"}
-                pharmacyName={pharmacyName}
-                patientName={handoff.patientName}
-                appointmentTime={handoff.appointmentTime}
                 onClose={() => setShowConsult(false)}
+                data={data}
               />
             )}
           </>
@@ -365,21 +357,17 @@ export function ActiveHandoffCard({
 }
 
 export function ConsultCard({
-  h,
-  rph,
   hTokens,
-  pharmacyNameStr,
+  data,
 }: {
-  h: PatientHandoffType;
-  rph: PharmacistType | null | undefined;
   hTokens: ReturnType<typeof computeTokens>;
-  pharmacyNameStr: string;
+  data: ConsultationData;
 }) {
+  const rph = data.pharmacist;
+  const h = data.handoff;
   const [expanded, setExpanded] = useState(false);
   const [showConsult, setShowConsult] = useState(false);
-  const reqAt = formatThaiDateTime(
-    h.telemedicineRequestTime ?? h.createAt,
-  );
+  const reqAt = formatThaiDateTime(h.telemedicineRequestTime ?? h.createAt);
   const apptAt = formatThaiDateTime(h.appointmentTime);
 
   return (
@@ -391,7 +379,7 @@ export function ConsultCard({
             <div className="relative shrink-0">
               <Avatar
                 src={rph ? PHARMACIST_PHOTOS[rph._id] : undefined}
-                name={rph?.name ?? pharmacyNameStr}
+                name={rph?.name ?? data.pharmacy.name}
                 size="md"
                 className="ring-2 ring-background shadow-md"
               />
@@ -411,7 +399,7 @@ export function ConsultCard({
             <div>
               <div className="flex items-center gap-1 mb-0.5">
                 <p className="font-semibold text-sm leading-tight">
-                  {rph?.name ?? pharmacyNameStr}
+                  {rph?.name ?? data.pharmacy.name}
                 </p>
                 {rph && (
                   <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -728,12 +716,8 @@ export function ConsultCard({
             </Button>
             {showConsult && (
               <ConsultationModal
-                handoffId={h._id}
-                channel={h.telemedicineChannel ?? "chat"}
-                pharmacyName={pharmacyNameStr}
-                patientName={h.patientName}
-                appointmentTime={h.appointmentTime}
                 onClose={() => setShowConsult(false)}
+                data={data}
               />
             )}
           </>
@@ -743,13 +727,7 @@ export function ConsultCard({
   );
 }
 
-export function ConsultTabJoinButton({
-  handoff,
-  pName,
-}: {
-  handoff: PatientHandoffType;
-  pName: string;
-}) {
+export function ConsultTabJoinButton({ data }: { data: ConsultationData }) {
   const [show, setShow] = useState(false);
   return (
     <>
@@ -759,34 +737,23 @@ export function ConsultTabJoinButton({
         onClick={() => setShow(true)}
       >
         <ChannelIcon
-          channel={handoff.telemedicineChannel}
+          channel={data.handoff.telemedicineChannel}
           className="h-4 w-4"
         />
         เข้าร่วมการปรึกษา
       </Button>
-      {show && (
-        <ConsultationModal
-          handoffId={handoff._id}
-          channel={handoff.telemedicineChannel ?? "chat"}
-          pharmacyName={pName}
-          patientName={handoff.patientName}
-          appointmentTime={handoff.appointmentTime}
-          onClose={() => setShow(false)}
-        />
-      )}
+      {show && <ConsultationModal onClose={() => setShow(false)} data={data} />}
     </>
   );
 }
 
-export function HistoryCard({
-  handoff,
-  pharmacyName,
-  pharmacist,
+export function HistoryCard({data
+  
 }: {
-  handoff: PatientHandoffType;
-  pharmacyName: string;
-  pharmacist?: PharmacistType | null;
+  data:ConsultationData
 }) {
+  const pharmacist=data.pharmacist
+  const handoff=data.handoff
   const tokens = computeTokens(handoff, pharmacist);
   const [expanded, setExpanded] = useState(false);
   const isTele = handoff.requestType === "telemedicine";
@@ -827,7 +794,7 @@ export function HistoryCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-0.5">
                 <p className="font-semibold text-sm truncate">
-                  {pharmacyName || "ร้านยา"}
+                  {data.pharmacy.name || "ร้านยา"}
                 </p>
                 <Badge
                   variant={STATUS_VARIANT[handoff.status]}

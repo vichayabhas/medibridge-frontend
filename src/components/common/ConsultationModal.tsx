@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { TelemedicineChannel } from "../../../interface";
+import { ConsultationData, TelemedicineChannel } from "../../../interface";
 import { cn } from "../utility/setup";
 import ChatConsult from "./consultationModal/ChatConsult";
 import WaitingScreen from "./consultationModal/WaitingScreen";
@@ -8,12 +8,8 @@ import PhoneConsult from "./consultationModal/PhoneConsult";
 import VideoConsult from "./consultationModal/VideoConsult";
 
 interface ConsultationModalProps {
-  handoffId: string;
-  channel: TelemedicineChannel;
-  pharmacyName: string;
-  patientName: string;
-  appointmentTime?: Date;
   onClose: () => void;
+  data: ConsultationData;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -34,21 +30,14 @@ const CHANNEL_LABEL: Record<TelemedicineChannel, string> = {
 
 // ─── Modal shell ─────────────────────────────────────────────────────────────
 
-export function ConsultationModal({
-  handoffId,
-  channel,
-  pharmacyName,
-  patientName,
-  appointmentTime,
-  onClose,
-}: ConsultationModalProps) {
-  const isChat = channel === "chat";
-  const isPhone = channel === "phone";
-  const isVideo = channel === "video";
+export function ConsultationModal({ onClose, data }: ConsultationModalProps) {
+  // const isChat = channel === "chat";
+  // const isPhone = channel === "phone";
+  // const isVideo = channel === "video";
   const modalRef = useRef<HTMLDivElement>(null);
 
-  const isFuture = appointmentTime
-    ? new Date(appointmentTime).getTime() > Date.now()
+  const isFuture = data.handoff.appointmentTime
+    ? new Date(data.handoff.appointmentTime).getTime() > Date.now()
     : false;
   const [waiting, setWaiting] = useState(isFuture);
 
@@ -77,57 +66,62 @@ export function ConsultationModal({
       <div
         className={cn(
           "w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col",
-          isChat && !waiting
+          data.isChat && !waiting
             ? "h-[85svh] sm:h-[600px] bg-background"
             : "h-[85svh] sm:h-[560px] bg-slate-950",
         )}
       >
         {/* Waiting gate */}
-        {waiting && appointmentTime && (
+        {waiting && data.handoff.appointmentTime && (
           <WaitingScreen
-            channel={channel}
-            pharmacyName={pharmacyName}
-            appointmentTime={appointmentTime}
+            channel={data.handoff.telemedicineChannel}
+            pharmacyName={data.pharmacy.name}
+            appointmentTime={data.handoff.appointmentTime}
             onClose={onClose}
             onReady={() => setWaiting(false)}
           />
         )}
 
         {/* Channel header — only for phone/video once past waiting */}
-        {!waiting && !isChat && (
+        {!waiting && !data.isChat && (
           <div className="absolute top-4 left-4 z-10">
             <span
               className={cn(
                 "text-xs px-2 py-1 rounded-full font-semibold",
-                isPhone
+                data.isPhone
                   ? "bg-emerald-500/20 text-emerald-300"
                   : "bg-violet-500/20 text-violet-300",
               )}
             >
-              {CHANNEL_LABEL[channel]}
+              {CHANNEL_LABEL[data.handoff.telemedicineChannel]}
             </span>
           </div>
         )}
 
-        {!waiting && isChat && (
+        {!waiting && data.isChat && (
           <ChatConsult
-            handoffId={handoffId}
-            patientName={patientName}
+            handoffId={data.handoff._id}
+            patientName={data.handoff.patientName}
             onClose={onClose}
+            messageInputs={data.messages}
           />
         )}
-        {!waiting && isPhone && (
+        {!waiting && data.isPhone && (
           <PhoneConsult
-            handoffId={handoffId}
-            pharmacyName={pharmacyName}
+            handoffId={data.handoff._id}
+            pharmacyName={data.pharmacy.name}
             onClose={onClose}
+            roomUrl={data.roomUrl}
+            messagesInputs={data.messages}
           />
         )}
-        {!waiting && isVideo && (
+        {!waiting && data.isVideo && (
           <VideoConsult
-            handoffId={handoffId}
-            pharmacyName={pharmacyName}
+            handoffId={data.handoff._id}
+            pharmacyName={data.pharmacy.name}
             onClose={onClose}
+            roomUrl={data.roomUrl}
+            messagesInputs={data.messages}
           />
         )}
       </div>

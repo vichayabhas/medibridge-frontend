@@ -8,54 +8,34 @@ import {
 } from "lucide-react";
 import React from "react";
 import { cn } from "../utility/setup";
-import {
-  PatientHandoffType,
-  PharmacistType,
-  PharmacyWithDistance,
-} from "../../../interface";
+import { ConsultationData } from "../../../interface";
 import TabContent from "./TabContent";
 import Link from "next/link";
 import { Button } from "../ui/button";
 type MainTab = "consult" | "store";
-export default function ParentView({
-  pharmacies,
-  pharmacists,
-  handoffs,
-}: {
-  pharmacies: PharmacyWithDistance[];
-  pharmacists: PharmacistType[];
-  handoffs: PatientHandoffType[];
-}) {
-  const pharmacistLookup = Object.fromEntries(
-    pharmacists.map((p) => [p._id, p]),
-  );
-
+export default function ParentView({ data }: { data: ConsultationData[] }) {
   // const [handoffs, setHandoffs] = useState<PatientHandoff[]>([]);
   // const [loading, setLoading] = useState(true);
   // const [refreshing, setRefreshing] = useState(false);
   const [mainTab, setMainTab] = React.useState<MainTab>("consult");
-  const pharmacyName = (id?: string) => {
-    if (!id) return "ร้านยา";
-    return pharmacies.find((p) => p._id === id)?.name ?? id;
-  };
 
-  const consultHandoffs = handoffs.filter(
-    (h) => h.requestType === "telemedicine",
+  const consultHandoffs = data.filter(
+    (h) => h.handoff.requestType === "telemedicine",
   );
-  const storeHandoffs = handoffs.filter((h) =>
-    ["pickup", "delivery", "in_store"].includes(h.requestType ?? ""),
+  const storeHandoffs = data.filter((h) =>
+    ["pickup", "delivery", "in_store"].includes(h.handoff.requestType),
   );
   const activeConsult = consultHandoffs.filter((h) =>
-    ["sent", "accepted", "ready"].includes(h.status),
+    ["sent", "accepted", "ready"].includes(h.handoff.status),
   );
   const historyConsult = consultHandoffs.filter((h) =>
-    ["completed", "rejected"].includes(h.status),
+    ["completed", "rejected"].includes(h.handoff.status),
   );
   const activeStore = storeHandoffs.filter((h) =>
-    ["sent", "accepted", "ready"].includes(h.status),
+    ["sent", "accepted", "ready"].includes(h.handoff.status),
   );
   const historyStore = storeHandoffs.filter((h) =>
-    ["completed", "rejected"].includes(h.status),
+    ["completed", "rejected"].includes(h.handoff.status),
   );
   // ── Patient view ──
   return (
@@ -102,13 +82,14 @@ export default function ParentView({
               bg: "bg-primary/8",
             },
             {
-              value: handoffs.filter((h) => h.status === "ready").length,
+              value: data.filter((h) => h.handoff.status === "ready").length,
               label: "ยาพร้อม",
               color: "text-success",
               bg: "bg-success/8",
             },
             {
-              value: handoffs.filter((h) => h.status === "completed").length,
+              value: data.filter((h) => h.handoff.status === "completed")
+                .length,
               label: "เสร็จสิ้น",
               color: "text-muted-foreground",
               bg: "bg-muted/40",
@@ -178,8 +159,6 @@ export default function ParentView({
           <TabContent
             active={activeConsult}
             history={historyConsult}
-            pharmacistLookup={pharmacistLookup}
-            pharmacyName={pharmacyName}
             emptyIcon={({ className }) => <Stethoscope className={className} />}
             emptyLabel="ไม่มีคำขอที่กำลังดำเนินการ"
             emptySubLabel="เมื่อส่งคำขอปรึกษาใหม่ สถานะจะปรากฏที่นี่"
@@ -197,8 +176,6 @@ export default function ParentView({
           <TabContent
             active={activeStore}
             history={historyStore}
-            pharmacistLookup={pharmacistLookup}
-            pharmacyName={pharmacyName}
             emptyIcon={({ className }) => (
               <PackageCheck className={className} />
             )}

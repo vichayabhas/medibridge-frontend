@@ -15,12 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 
 import { signOut } from "next-auth/react";
-import {
-  AuthUser,
-  PatientHandoffType,
-  PharmacistType,
-  PharmacyWithDistance,
-} from "../../../interface";
+import { AuthUser, ConsultationData } from "../../../interface";
 import Link from "next/link";
 import { cn, getBackendUrl, SocketReady } from "../utility/setup";
 import { HistoryCard } from "./HandoffSection";
@@ -36,22 +31,19 @@ type TabType = "store" | "consult" | "profile";
 
 export default function ProfilePage({
   user,
-  data: { pharmacies, pharmacists },
+  data,
   token,
 }: {
   user: AuthUser;
-  data: { pharmacies: PharmacyWithDistance[]; pharmacists: PharmacistType[] };
+  data: ConsultationData[];
   token: string;
 }) {
   const socket = io(getBackendUrl());
   const currentUser = user;
   const logout = signOut;
-  const pharmacistLookup = Object.fromEntries(
-    pharmacists.map((p) => [p._id, p]),
-  );
 
   const [activeTab, setActiveTab] = useState<TabType>("store");
-  const [handoffs, setHandoffs] = useState<PatientHandoffType[]>([]);
+  const [handoffs, setHandoffs] = useState<ConsultationData[]>(data);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [liveProfile, setLiveProfile] = useState(currentUser);
@@ -128,43 +120,56 @@ export default function ProfilePage({
     };
   }, [currentUser?._id, autoSyncClipboard]);
 
-  const pharmacyName = (id?: string) => {
-    if (!id) return "ร้านยา";
-    return pharmacies.find((p) => p._id === id)?.name ?? id;
-  };
-
   const activeHandoffs = handoffs.filter((h) =>
-    ["sent", "accepted", "ready"].includes(h.status),
+    ["sent", "accepted", "ready"].includes(h.handoff.status),
   );
   const historyHandoffs = handoffs.filter((h) =>
-    ["completed", "rejected"].includes(h.status),
+    ["completed", "rejected"].includes(h.handoff.status),
   );
 
-  // Pharmacy consultations (telemedicine only)
-  const consultationHandoffs = handoffs.filter(
-    (h) => h.requestType === "telemedicine",
+  // // Pharmacy consultations (telemedicine only)
+  // const consultationHandoffs = handoffs.filter(
+  //   (h) => h.requestType === "telemedicine",
+  // );
+  // const activeConsultations = consultationHandoffs.filter((h) =>
+  //   ["sent", "accepted", "ready"].includes(h.status),
+  // );
+  // const pastConsultations = consultationHandoffs.filter((h) =>
+  //   ["completed", "rejected"].includes(h.status),
+  // );
+
+  // // Store orders only (no consultations)
+  // const storeHandoffs = handoffs.filter((h) =>
+  //   ["pickup", "delivery", "in_store"].includes(h.requestType ?? ""),
+  // );
+  // const activeStoreHandoffs = storeHandoffs.filter((h) =>
+  //   ["sent", "accepted", "ready"].includes(h.status),
+  // );
+  // const historyStoreHandoffs = storeHandoffs.filter((h) =>
+  //   ["completed", "rejected"].includes(h.status),
+  // );
+  const consultHandoffs = data.filter(
+    (h) => h.handoff.requestType === "telemedicine",
   );
-  const activeConsultations = consultationHandoffs.filter((h) =>
-    ["sent", "accepted", "ready"].includes(h.status),
+  const storeHandoffs = data.filter((h) =>
+    ["pickup", "delivery", "in_store"].includes(h.handoff.requestType),
   );
-  const pastConsultations = consultationHandoffs.filter((h) =>
-    ["completed", "rejected"].includes(h.status),
+  const activeConsult = consultHandoffs.filter((h) =>
+    ["sent", "accepted", "ready"].includes(h.handoff.status),
+  );
+  const historyConsult = consultHandoffs.filter((h) =>
+    ["completed", "rejected"].includes(h.handoff.status),
+  );
+  const activeStore = storeHandoffs.filter((h) =>
+    ["sent", "accepted", "ready"].includes(h.handoff.status),
+  );
+  const historyStore = storeHandoffs.filter((h) =>
+    ["completed", "rejected"].includes(h.handoff.status),
   );
 
-  // Store orders only (no consultations)
-  const storeHandoffs = handoffs.filter((h) =>
-    ["pickup", "delivery", "in_store"].includes(h.requestType ?? ""),
-  );
-  const activeStoreHandoffs = storeHandoffs.filter((h) =>
-    ["sent", "accepted", "ready"].includes(h.status),
-  );
-  const historyStoreHandoffs = storeHandoffs.filter((h) =>
-    ["completed", "rejected"].includes(h.status),
-  );
-
-  // Real stats from handoff data
+  // // Real stats from handoff data
   const completedCount = historyHandoffs.filter(
-    (h) => h.status === "completed",
+    (h) => h.handoff.status === "completed",
   ).length;
 
   // const handleSyncClick = async () => {
@@ -313,9 +318,9 @@ export default function ProfilePage({
                     <p className="font-semibold text-sm">ติดตามคำขอร้านยา</p>
                     <p className="text-xs text-muted-foreground">
                       ดูสถานะคำขอที่กำลังดำเนินการอยู่
-                      {activeStoreHandoffs.length > 0 && (
+                      {activeStore.length > 0 && (
                         <span className="ml-1.5 font-bold text-primary">
-                          ({activeStoreHandoffs.length} รายการ)
+                          ({activeStore.length} รายการ)
                         </span>
                       )}
                     </p>
@@ -331,9 +336,9 @@ export default function ProfilePage({
                 <h2 className="font-bold text-base flex items-center gap-2">
                   <Store className="h-4 w-4 text-primary" />
                   ประวัติการใช้บริการ
-                  {historyStoreHandoffs.length > 0 && (
+                  {historyStore.length > 0 && (
                     <Badge variant="muted" className="text-[11px] px-2 py-0.5">
-                      {historyStoreHandoffs.length}
+                      {historyStore.length}
                     </Badge>
                   )}
                 </h2>
@@ -345,7 +350,7 @@ export default function ProfilePage({
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </CardContent>
                 </Card>
-              ) : historyStoreHandoffs.length === 0 ? (
+              ) : historyStore.length === 0 ? (
                 <Card className="border-dashed border-border/60 bg-muted/20">
                   <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
                     <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center">
@@ -363,15 +368,8 @@ export default function ProfilePage({
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  {historyStoreHandoffs.map((h) => (
-                    <HistoryCard
-                      key={h._id}
-                      handoff={h}
-                      pharmacyName={pharmacyName(h.pharmacyId)}
-                      pharmacist={
-                        h.pharmacistId ? pharmacistLookup[h.pharmacistId] : null
-                      }
-                    />
+                  {historyStore.map((h) => (
+                    <HistoryCard key={h.handoff._id} data={h} />
                   ))}
                 </div>
               )}
@@ -390,9 +388,9 @@ export default function ProfilePage({
                     <p className="font-semibold text-sm">ติดตามการปรึกษา</p>
                     <p className="text-xs text-muted-foreground">
                       ดูสถานะคำขอที่กำลังดำเนินการอยู่
-                      {activeConsultations.length > 0 && (
+                      {activeConsult.length > 0 && (
                         <span className="ml-1.5 font-bold text-secondary">
-                          ({activeConsultations.length} รายการ)
+                          ({activeConsult.length} รายการ)
                         </span>
                       )}
                     </p>
@@ -408,9 +406,9 @@ export default function ProfilePage({
                 <h2 className="font-bold text-base flex items-center gap-2">
                   <Stethoscope className="h-4 w-4 text-primary" />
                   ประวัติการปรึกษา
-                  {pastConsultations.length > 0 && (
+                  {historyConsult.length > 0 && (
                     <Badge variant="muted" className="text-[11px] px-2 py-0.5">
-                      {pastConsultations.length}
+                      {historyConsult.length}
                     </Badge>
                   )}
                 </h2>
@@ -422,7 +420,7 @@ export default function ProfilePage({
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </CardContent>
                 </Card>
-              ) : pastConsultations.length === 0 ? (
+              ) : historyConsult.length === 0 ? (
                 <Card className="border-dashed border-border/60 bg-muted/20">
                   <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
                     <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center">
@@ -440,15 +438,8 @@ export default function ProfilePage({
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  {pastConsultations.map((h) => (
-                    <HistoryCard
-                      key={h._id}
-                      handoff={h}
-                      pharmacyName={pharmacyName(h.pharmacyId)}
-                      pharmacist={
-                        h.pharmacistId ? pharmacistLookup[h.pharmacistId] : null
-                      }
-                    />
+                  {historyConsult.map((h) => (
+                    <HistoryCard key={h.handoff._id} data={h} />
                   ))}
                 </div>
               )}

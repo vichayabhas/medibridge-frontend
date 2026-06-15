@@ -16,15 +16,17 @@ interface UseTelepharmacyChatOptions {
   senderType: SenderType;
   senderName: string;
   // enabled?: boolean;
+  messageInputs: ChatMessage[];
 }
 
 export function useTelepharmacyChat({
   handoffId,
   senderType,
   senderName,
+  messageInputs,
   // enabled = true,
 }: UseTelepharmacyChatOptions) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(messageInputs);
   // const [isLoading, setIsLoading] = useState(true);
   // const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 

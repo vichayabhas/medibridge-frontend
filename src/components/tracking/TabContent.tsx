@@ -1,26 +1,22 @@
-'use client'
+"use client";
 import React from "react";
 import HistoryRow from "./HistoryRow";
 import { computeTokens } from "./TrackingPage";
 import { Card, CardContent } from "../ui/card";
-import { PatientHandoffType, PharmacistType } from "../../../interface";
+import { ConsultationData } from "../../../interface";
 import { cn } from "../utility/setup";
 import ActiveCard from "./ActiveCard";
 import { History } from "lucide-react";
 export default function TabContent({
   active,
   history,
-  pharmacistLookup,
-  pharmacyName,
   emptyIcon: EmptyIcon,
   emptyLabel,
   emptySubLabel,
   emptyAction,
 }: {
-  active: PatientHandoffType[];
-  history: PatientHandoffType[];
-  pharmacistLookup: Record<string, PharmacistType>;
-  pharmacyName: (id?: string) => string;
+  active: ConsultationData[];
+  history: ConsultationData[];
   emptyIcon: React.FC<{ className?: string }>;
   emptyLabel: string;
   emptySubLabel: string;
@@ -66,7 +62,7 @@ export default function TabContent({
       </div>
 
       {subTab === "active" ? (
- active.length === 0 ? (
+        active.length === 0 ? (
           <Card className="border-dashed border-border/60 bg-muted/20">
             <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
               <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
@@ -84,22 +80,18 @@ export default function TabContent({
         ) : (
           <div className="space-y-4">
             {active.map((h) => {
-              const rph = h.pharmacistId
-                ? pharmacistLookup[h.pharmacistId]
-                : null;
+
               return (
                 <ActiveCard
-                  key={h._id}
+                  key={h.handoff._id}
                   h={h}
-                  rph={rph}
-                  hTokens={computeTokens(h, rph)}
-                  pharmacyNameStr={pharmacyName(h.pharmacyId)}
+                  hTokens={computeTokens(h.handoff, h.pharmacist)}
                 />
               );
             })}
           </div>
         )
-      )  : history.length === 0 ? (
+      ) : history.length === 0 ? (
         <Card className="border-dashed border-border/60 bg-muted/20">
           <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
             <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center">
@@ -116,15 +108,11 @@ export default function TabContent({
       ) : (
         <div className="space-y-3">
           {history.map((h) => {
-            const rph = h.pharmacistId
-              ? pharmacistLookup[h.pharmacistId]
-              : null;
             return (
               <HistoryRow
-                key={h._id}
-                h={h}
-                hTokens={computeTokens(h, rph)}
-                pharmacyNameStr={pharmacyName(h.pharmacyId)}
+                key={h.handoff._id}
+                data={h}
+                hTokens={computeTokens(h.handoff, h.pharmacist)}
               />
             );
           })}
