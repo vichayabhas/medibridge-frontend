@@ -2,15 +2,13 @@ import { getServerSession } from "next-auth";
 import React from "react";
 import { authOptions } from "../api/auth/[...nextauth]/options";
 import BackToHome from "@/components/utility/BackToHome";
-import getUserProfile from "@/libs/user/getUserProfile";
 import ProfilePage from "@/components/user/ProfilePage";
-import getPatientHandoffsForConsultation from "@/libs/patientHandoff/getPatientHandoffsForConsultation";
+import getPatientProfileData from "@/libs/user/getPatientProfileData";
 export default async function page() {
   const session = await getServerSession(authOptions);
   if (!session) {
     return <BackToHome />;
   }
-  const user = await getUserProfile(session.user.token);
-  const data = await getPatientHandoffsForConsultation(session.user.token);
-  return <ProfilePage user={user} data={data} token={session.user.token} />;
+  const data = await getPatientProfileData(session.user.token);
+  return <ProfilePage data={data} token={session.user.token} />;
 }

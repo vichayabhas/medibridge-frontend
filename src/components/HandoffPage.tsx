@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getCachedOverpassPharmacy } from "./nearby/overpassPharmacies";
-import { PatientRequestType, TelemedicineChannel } from "../../interface";
+import { PatientProfileType, PatientRequestType, TelemedicineChannel } from "../../interface";
 import { cn, getBackendUrl, SocketReady } from "./utility/setup";
 import savePatientHandoff from "@/libs/patientHandoff/savePatientHandoff";
 import hasPendingHandoff from "@/libs/patientHandoff/hasPendingHandoff";
@@ -169,7 +169,7 @@ function SuccessState({
 }
 const socket = io(getBackendUrl());
 /* ─── Main page ───────────────────────────────────────────────────────── */
-export default function HandoffPage({ token }: { token: string }) {
+export default function HandoffPage({ token ,patientProfile}: { token: string,patientProfile:PatientProfileType }) {
   const searchParams = useSearchParams();
 
   // 1. Get initial state from URL
@@ -248,28 +248,28 @@ export default function HandoffPage({ token }: { token: string }) {
     setSending(true);
     const result = await savePatientHandoff(
       {
-        patientName: "คุณสมชาย ใจดี",
+        patientName: `${patientProfile.firstName} ${patientProfile.lastName}`,
         age: 34,
-        symptoms: ["ปวดหัว", "ไข้ 38.5°C", "เจ็บคอ"],
+        symptoms: patientProfile.symptoms.split(','),
         duration: "2 วัน",
-        allergies: ["Penicillin"],
-        conditions: ["ความดันโลหิตสูง"],
+        allergies: patientProfile.allergies,
+        conditions: patientProfile.conditions,
         appointmentTime: appointmentDate,
         requestType,
         telemedicineChannel,
         telemedicinePatientNote: telemedicinePatientNote.trim(),
         telemedicineCollectedData,
-        patientSummary: `${MOCK_SUMMARY.symptoms.join(", ")} · ${MOCK_SUMMARY.duration}`,
+        patientSummary: `${patientProfile.symptoms} · ${MOCK_SUMMARY.duration}`,
         status: "sent",
         aiSummary:
           "ผู้ใช้มีอาการปวดหัว ไข้ประมาณ 38.5°C และเจ็บคอมา 2 วัน มีโรคประจำตัวความดันโลหิตสูง และแจ้งประวัติแพ้ Penicillin",
         suggestedAction:
           "เภสัชกรควรตรวจประวัติแพ้ยาและยาความดันที่ใช้อยู่ก่อนแนะนำยา ลดไข้/บรรเทาอาการ และประเมิน red flag ซ้ำ",
         pharmacyId: destination.id,
-        gender: "",
-        medications: [],
+        gender: patientProfile.gender,
+        medications: patientProfile.currentMedications,
         pharmacistId: "",
-        fulfillment: "",
+        fulfillment: 'pickup',
         telemedicineRequestTime: new Date(),
         telemedicineStartTime: new Date(),
         telemedicineEndTime: new Date(),

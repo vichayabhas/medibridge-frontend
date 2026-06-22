@@ -8,14 +8,20 @@ import {
   RefreshCw,
   ArrowRight,
   Loader2,
+  LucideProps,
+  UserRoundPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
+// import { Avatar } from "@/components/ui/avatar";
 
 import { signOut } from "next-auth/react";
-import { AuthUser, ConsultationData } from "../../../interface";
+import {
+  AuthUser,
+  ConsultationData,
+  GetPatientProfileData,
+} from "../../../interface";
 import Link from "next/link";
 import { cn, getBackendUrl, SocketReady } from "../utility/setup";
 import { HistoryCard } from "./HandoffSection";
@@ -23,32 +29,45 @@ import { ProfileSection } from "./ProfileSection";
 import getPatientHandoffs from "@/libs/patientHandoff/getPatientHandoffs";
 import { io } from "socket.io-client";
 import updateProfile from "@/libs/user/updateProfile";
+import PatientRegisterPage from "./PatientRegisterPage";
 // import { useRouter } from "next/navigation";
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-type TabType = "store" | "consult" | "profile";
-
+type TabType = "store" | "consult" | "profile" | "register";
+const tapTypes: {
+  id: TabType;
+  label: string;
+  icon: React.ForwardRefExoticComponent<
+    Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
+  >;
+}[] = [
+  { id: "store", label: "คำขอที่ร้านยา", icon: Store },
+  { id: "consult", label: "คำขอปรึกษา", icon: Stethoscope },
+  { id: "profile", label: "ข้อมูลส่วนตัว", icon: User },
+  { id: "register", label: "ลงทะเบียนคนไข้", icon: UserRoundPlus },
+];
 export default function ProfilePage({
-  user,
   data,
   token,
 }: {
-  user: AuthUser;
-  data: ConsultationData[];
+  data: GetPatientProfileData;
   token: string;
 }) {
   const socket = io(getBackendUrl());
-  const currentUser = user;
+  const currentUser = data.user;
   const logout = signOut;
 
   const [activeTab, setActiveTab] = useState<TabType>("store");
-  const [handoffs, setHandoffs] = useState<ConsultationData[]>(data);
+  const [handoffs, setHandoffs] = useState<ConsultationData[]>(
+    data.consultationDatas,
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [liveProfile, setLiveProfile] = useState(currentUser);
   // const [syncStatus, setSyncStatus] = useState<"synced" | "syncing" | "error">("synced");
   const [autoSyncClipboard, setAutoSyncClipboard] = useState(false);
+  const [patientProfile, setPatientProfile] = React.useState(data.patient);
 
   const load = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -148,10 +167,10 @@ export default function ProfilePage({
   // const historyStoreHandoffs = storeHandoffs.filter((h) =>
   //   ["completed", "rejected"].includes(h.status),
   // );
-  const consultHandoffs = data.filter(
+  const consultHandoffs = handoffs.filter(
     (h) => h.handoff.requestType === "telemedicine",
   );
-  const storeHandoffs = data.filter((h) =>
+  const storeHandoffs = handoffs.filter((h) =>
     ["pickup", "delivery", "in_store"].includes(h.handoff.requestType),
   );
   const activeConsult = consultHandoffs.filter((h) =>
@@ -225,11 +244,11 @@ export default function ProfilePage({
             <div className="flex items-end justify-between gap-4 mb-5">
               <div className="flex items-end gap-4">
                 <div className="relative">
-                  <Avatar
+                  {/* <Avatar
                     name={currentUser.name}
                     size="xl"
                     className="ring-4 ring-background shadow-xl"
-                  />
+                  /> */}
                   <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-success border-2 border-background" />
                 </div>
                 <div className="pb-2">
@@ -284,25 +303,31 @@ export default function ProfilePage({
 
         {/* Tab Switcher */}
         <div className="flex p-1 mb-6 bg-muted/50 rounded-xl">
-          {[
-            { id: "store", label: "คำขอที่ร้านยา", icon: Store },
-            { id: "consult", label: "คำขอปรึกษา", icon: Stethoscope },
-            { id: "profile", label: "ข้อมูลส่วนตัว", icon: User },
-          ].map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id as TabType)}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all",
-                activeTab === id
-                  ? "bg-white text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          ))}
+          {tapTypes
+            .filter((v) => {
+              if (v.id == "profile" || v.id == "register") {
+                return true;
+              }
+              if (!patientProfile) {
+                return false;
+              }
+              return true;
+            })
+            .map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all",
+                  activeTab === id
+                    ? "bg-white text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
         </div>
 
         {activeTab === "store" ? (
@@ -444,6 +469,15 @@ export default function ProfilePage({
                 </div>
               )}
             </section>
+          </>
+        ) : activeTab == "register" ? (
+          <>
+            <PatientRegisterPage
+              user={currentUser}
+              patientProfile={patientProfile}
+              token={token}
+              setPatientProfile={setPatientProfile}
+            />
           </>
         ) : (
           <>
