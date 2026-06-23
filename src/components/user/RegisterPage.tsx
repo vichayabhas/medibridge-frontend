@@ -18,7 +18,6 @@ import Link from "next/link";
 import userSignup from "../../libs/user/userSignup";
 import { useRouter } from "next/navigation";
 import { setTextToString } from "../utility/setup";
-import TypingImageSource from "../utility/TypingImageSource";
 const seededRoles: AuthRoleSeed[] = [
   { value: "patient", label: "ผู้ใช้ทั่วไป" },
   { value: "pharmacist", label: "เภสัชกร" },
@@ -47,7 +46,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
-  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const router = useRouter();
 
   // const update =
@@ -56,29 +54,27 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (avatarUrl) {
-      setError("");
-      setLoading(true);
-      const result = await userSignup({
-        password,
-        phone,
-        name,
-        email,
-        role,
-        avatarUrl,
-      });
+    setError("");
+    setLoading(true);
+    const result = await userSignup({
+      password,
+      phone,
+      name,
+      email,
+      role,
+      // avatarUrl,
+    });
 
-      setLoading(false);
+    setLoading(false);
 
-      if (!result.ok) {
-        setError((result as { ok: false; error: string }).error);
-        return;
-      }
-
-      setDone(true);
-      const target = role === "pharmacist" ? "/pharmacy-role" : "/";
-      setTimeout(() => router.push(target), 1200);
+    if (!result.ok) {
+      setError((result as { ok: false; error: string }).error);
+      return;
     }
+
+    setDone(true);
+    const target = role === "pharmacist" ? "/pharmacy-role" : "/";
+    setTimeout(() => router.push(target), 1200);
   };
 
   return (
@@ -290,8 +286,6 @@ export default function RegisterPage() {
                     </p>
                   )}
                 </div>
-
-                <TypingImageSource defaultSrc={null} onChange={setAvatarUrl} />
 
                 <p className="text-xs text-muted-foreground leading-[1.75]">
                   โดยการสมัคร คุณยอมรับ{" "}
